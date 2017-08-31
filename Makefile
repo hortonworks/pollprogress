@@ -1,6 +1,10 @@
 VERSION=0.1.0
 OWNER=$(shell glu info| sed -n "s/Owner: //p")
 
+deps:
+	go get -u github.com/kardianos/govendor
+	go get -u github.com/gliderlabs/glu
+
 build:
 	glu build $(shell uname)
 

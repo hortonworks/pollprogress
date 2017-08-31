@@ -1,0 +1,43 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "PDOZ49LheSfAV8kR6n+QGQ5VCfE=",
+			"path": "github.com/kless/term",
+			"revision": "e551c64f56c0ac0469b4db1b70918e05bfd3ab20",
+			"revisionTime": "2016-11-30T13:33:37Z"
+		},
+		{
+			"checksumSHA1": "CE3DVfhKWVmjYqPcjv9bzYeP0KI=",
+			"path": "github.com/sethgrid/curse",
+			"revision": "3378651548d4bda6a856c69719d593d902ec8b21",
+			"revisionTime": "2015-01-11T06:54:24Z"
+		},
+		{
+			"checksumSHA1": "xE9+ofLipG2ksStXqexum3ploqg=",
+			"path": "github.com/sethgrid/multibar",
+			"revision": "4bf4cf7b87d60bfaf4b4ec40fc7aabf376d0be37",
+			"revisionTime": "2016-04-17T17:15:08Z"
+		},
+		{
+			"checksumSHA1": "3N+2kAnhyO6QIEp3yMxldBb+k1c=",
+			"path": "github.com/tredoe/term/sys",
+			"revision": "e551c64f56c0ac0469b4db1b70918e05bfd3ab20",
+			"revisionTime": "2016-11-30T13:33:37Z"
+		},
+		{
+			"checksumSHA1": "93IzjQY+0dhZtOKGZbdyS50tsKw=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "ab9e364efd8b52800ff7ee48a9ffba4e0ed78dfb",
+			"revisionTime": "2017-08-29T14:47:16Z"
+		},
+		{
+			"checksumSHA1": "RDJpJQwkF012L6m/2BJizyOksNw=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "eb3733d160e74a9c7e442f435eb3bea458e1d19f",
+			"revisionTime": "2017-08-12T16:00:11Z"
+		}
+	],
+	"rootPath": "github.com/hortonworks/pollprogress"
+}

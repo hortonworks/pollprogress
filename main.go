@@ -19,13 +19,13 @@ import (
 func poll(cmd string) (int, int) {
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	if err != nil {
-		fmt.Printf("[OUTUT] %s\n", out)
+		fmt.Printf("[OUTPUT] %s\n", out)
 		log.Fatal(err)
 	}
 
 	parts := strings.Split(string(out), "/")
 	if len(parts) != 2 {
-		log.Fatalf("Command should have returned <actual>/<total> instead it was:", out)
+		log.Fatalf("Command should have returned <actual>/<total> instead it was: %s", out)
 	}
 
 	act, err := strconv.Atoi(strings.TrimSpace(parts[0]))
@@ -33,11 +33,11 @@ func poll(cmd string) (int, int) {
 		log.Fatal(err)
 	}
 
-	summ, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+	sum, err := strconv.Atoi(strings.TrimSpace(parts[1]))
 	if err != nil {
 		log.Fatal(err)
 	}
-	return act, summ
+	return act, sum
 }
 
 func main() {
@@ -62,8 +62,8 @@ func main() {
 	totals := map[string]int{}
 	for task, cmd := range obj {
 		go func(task, cmd string) {
-			_, summ := poll(cmd)
-			totals[task] = summ
+			_, sum := poll(cmd)
+			totals[task] = sum
 			wg.Done()
 		}(task, cmd)
 	}
@@ -74,9 +74,9 @@ func main() {
 		p := progressBars.MakeBar(totals[task], fmt.Sprintf("%-30s", task))
 		go func(task, cmd string, progressFn multibar.ProgressFunc) {
 
-			act, summ := poll(cmd)
+			act, sum := poll(cmd)
 			progressFn(act)
-			for act < summ {
+			for act < sum {
 				act, _ = poll(cmd)
 				progressFn(act)
 			}
