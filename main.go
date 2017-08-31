@@ -17,7 +17,7 @@ import (
 )
 
 func poll(cmd string) (int, int) {
-	out, err := exec.Command("sh", "-c", cmd).Output()
+	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 	if err != nil {
 		fmt.Printf("[OUTPUT] %s\n", out)
 		log.Fatal(err)
