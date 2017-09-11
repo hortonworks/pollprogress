@@ -1,4 +1,4 @@
-VERSION=0.1.1
+VERSION=0.1.2
 OWNER=$(shell glu info| sed -n "s/Owner: //p")
 
 deps:

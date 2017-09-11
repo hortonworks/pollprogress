@@ -13,31 +13,31 @@ import (
 
 	"github.com/sethgrid/multibar"
 
+	"errors"
 	"gopkg.in/yaml.v2"
 )
 
-func poll(cmd string) (int, int) {
+func poll(cmd string) (int, int, error) {
 	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 	if err != nil {
-		fmt.Printf("[OUTPUT] %s\n", out)
-		log.Fatal(err)
+		return 0, 0, errors.New(fmt.Sprintf("ERROR: output: %s, err: %s", out, err.Error()))
 	}
 
 	parts := strings.Split(string(out), "/")
 	if len(parts) != 2 {
-		log.Fatalf("Command should have returned <actual>/<total> instead it was: %s", out)
+		return 0, 0, errors.New(fmt.Sprintf("Command should have returned <actual>/<total> instead it was: %s", out))
 	}
 
 	act, err := strconv.Atoi(strings.TrimSpace(parts[0]))
 	if err != nil {
-		log.Fatal(err)
+		return 0, 0, errors.New(fmt.Sprintf("Cannot convert actual copy progress to int: %s", parts[0]))
 	}
 
 	sum, err := strconv.Atoi(strings.TrimSpace(parts[1]))
 	if err != nil {
-		log.Fatal(err)
+		return 0, 0, errors.New(fmt.Sprintf("Cannot convert total blob sizeto int: %s", parts[1]))
 	}
-	return act, sum
+	return act, sum, nil
 }
 
 func main() {
@@ -60,11 +60,18 @@ func main() {
 	wg.Add(len(obj))
 
 	totals := map[string]int{}
+	log.Println("Getting blob sizes..")
 	for task, cmd := range obj {
 		go func(task, cmd string) {
-			_, sum := poll(cmd)
+			defer wg.Done()
+			_, sum, err := poll(cmd)
+			for err != nil {
+				time.Sleep(time.Second * 1)
+				log.Printf("Error finding the total size of the vhd in Storage Account: %s, error: %s", task, err.Error())
+				_, sum, err = poll(cmd)
+			}
+			log.Printf("Blob size of vhd in Storage Account of %s is: %d", task, sum)
 			totals[task] = sum
-			wg.Done()
 		}(task, cmd)
 	}
 	wg.Wait()
@@ -72,28 +79,31 @@ func main() {
 	wg.Add(len(obj))
 	for task, cmd := range obj {
 		p := progressBars.MakeBar(totals[task], fmt.Sprintf("%-30s", task))
-		go func(task, cmd string, progressFn multibar.ProgressFunc) {
-
-			act, sum := poll(cmd)
-			progressFn(act)
-			for act < sum {
-				act, _ = poll(cmd)
+		go func(cmd string, progressFn multibar.ProgressFunc) {
+			defer wg.Done()
+			act, sum, err := poll(cmd)
+			if err == nil {
 				progressFn(act)
 			}
+			for act < sum || err != nil {
+				time.Sleep(time.Second * 1)
+				act, _, err = poll(cmd)
+				if err == nil {
+					progressFn(act)
+				}
+			}
+			progressFn(act)
 
-			wg.Done()
-		}(task, cmd, p)
+		}(cmd, p)
 	}
 
 	go progressBars.Listen()
-	//time.Sleep(time.Second * 3)
 
 	for _, b := range progressBars.Bars {
 		b.Update(0)
 	}
 
 	wg.Wait()
-	time.Sleep(time.Second * 1)
 
 	fmt.Println("DONE")
 }
