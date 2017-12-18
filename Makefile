@@ -1,10 +1,11 @@
 BINARY=pollprogress
-VERSION=0.1.2
+VERSION=0.1.3
 OWNER=$(shell glu info| sed -n "s/Owner: //p")
 
 deps:
 	go get -u github.com/kardianos/govendor
 	go get -u github.com/gliderlabs/glu
+	go get -u github.com/sethgrid/multibar
 
 build:
 	GOOS=linux CGO_ENABLED=0 go build -o build/Linux/${BINARY} main.go
