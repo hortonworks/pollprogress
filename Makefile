@@ -1,5 +1,5 @@
 BINARY=pollprogress
-VERSION=0.1.3
+VERSION=0.2.0
 OWNER=$(shell glu info| sed -n "s/Owner: //p")
 
 deps:
