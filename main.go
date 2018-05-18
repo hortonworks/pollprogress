@@ -67,19 +67,19 @@ func main() {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(tasks))
 
-	totals := map[string]int{}
 	log.Println("Getting blob sizes..")
 	for storageAccount, cmd := range tasks {
 		go func(storageAccount, cmd string) {
 			defer wg.Done()
-			_, sum, err := poll(cmd)
-			for err != nil {
-				time.Sleep(time.Second * 1)
-				log.Printf("Error finding the total size of the vhd in Storage Account: %s, error: %s", storageAccount, err.Error())
+			sum := 0
+			for sum == 0 {
 				_, sum, err = poll(cmd)
+				if err != nil {
+					log.Printf("Error finding the total size of the vhd in Storage Account: %s, error: %s", storageAccount, err.Error())
+					time.Sleep(time.Second * 1)
+				}
 			}
 			log.Printf("Blob size of vhd in Storage Account of %s is: %f GB", storageAccount, float64(sum)/math.Pow(1024, 3))
-			totals[storageAccount] = sum
 		}(storageAccount, cmd)
 	}
 	wg.Wait()
@@ -88,21 +88,21 @@ func main() {
 	for storageAccount, cmd := range tasks {
 		go func(storageAccount, cmd string) {
 			defer wg.Done()
-			act, sum, err := poll(cmd)
-			if err == nil {
-				log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(act)/float64(sum))*100)
-			}
-			for act < sum || err != nil {
-				time.Sleep(time.Second * 10)
+			act, sum := 0, 0
+			var err error
+			for act == 0 || sum == 0 || act < sum {
 				act, sum, err = poll(cmd)
-				if err == nil {
+				if err != nil {
+					log.Printf("Failed to check the copy status to Storage Account %s, err: %s", storageAccount, err.Error())
+				} else {
 					log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(act)/float64(sum))*100)
 				}
+				time.Sleep(time.Second * 10)
 			}
 		}(storageAccount, cmd)
 	}
 
 	wg.Wait()
 
-	fmt.Println("DONE")
+	log.Println("DONE")
 }
