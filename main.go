@@ -90,13 +90,13 @@ func main() {
 			defer wg.Done()
 			act, sum, err := poll(cmd)
 			if err == nil {
-				log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(sum)/float64(act))*100)
+				log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(act)/float64(sum))*100)
 			}
 			for act < sum || err != nil {
 				time.Sleep(time.Second * 10)
 				act, sum, err = poll(cmd)
 				if err == nil {
-					log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(sum)/float64(act))*100)
+					log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(act)/float64(sum))*100)
 				}
 			}
 		}(storageAccount, cmd)
