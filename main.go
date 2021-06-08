@@ -4,17 +4,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"math"
 
 	"errors"
+
 	"gopkg.in/yaml.v2"
 )
+
+const ERROR_LIMIT = 5
 
 func poll(cmd string) (int, int, error) {
 	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
@@ -66,16 +69,23 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(len(tasks))
+	errChan := make(chan error)
 
 	log.Println("Getting blob sizes..")
 	for storageAccount, cmd := range tasks {
 		go func(storageAccount, cmd string) {
 			defer wg.Done()
-			sum := 0
+			sum, numErr := 0, 0
 			for sum == 0 {
 				_, sum, err = poll(cmd)
 				if err != nil {
+					numErr = numErr + 1
 					log.Printf("Error finding the total size of the vhd in Storage Account: %s, error: %s", storageAccount, err.Error())
+					if numErr == ERROR_LIMIT {
+						errChan <- fmt.Errorf("error limit reached for total size of the vhd in Storage Account %s, exiting with err %w", storageAccount, err)
+						delete(tasks, storageAccount) // remove the task for the failed storage account
+						return
+					}
 					time.Sleep(time.Second * 1)
 				}
 			}
@@ -88,12 +98,17 @@ func main() {
 	for storageAccount, cmd := range tasks {
 		go func(storageAccount, cmd string) {
 			defer wg.Done()
-			act, sum := 0, 0
+			act, sum, numErr := 0, 0, 0
 			var err error
 			for act == 0 || sum == 0 || act < sum {
 				act, sum, err = poll(cmd)
 				if err != nil {
-					log.Printf("Failed to check the copy status to Storage Account %s, err: %s", storageAccount, err.Error())
+					numErr = numErr + 1
+					log.Printf("Failed to check the copy status to Storage Account %s [%d/%d] err: %s", storageAccount, numErr, ERROR_LIMIT, err.Error())
+					if numErr == ERROR_LIMIT {
+						errChan <- fmt.Errorf("error limit reached for the copy status to Storage Account %s, exiting with err %w", storageAccount, err)
+						return
+					}
 				} else {
 					log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(act)/float64(sum))*100)
 				}
@@ -102,7 +117,17 @@ func main() {
 		}(storageAccount, cmd)
 	}
 
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		close(errChan)
+	}()
+
+	if len(errChan) != 0 {
+		for err := range errChan {
+			log.Printf("%w", err)
+		}
+		panic("Failed to poll progress of some copy operations")
+	}
 
 	log.Println("DONE")
 }
