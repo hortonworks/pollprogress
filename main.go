@@ -69,7 +69,7 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(len(tasks))
-	errChan := make(chan error)
+	errChan := make(chan error, len(tasks))
 
 	log.Println("Getting blob sizes..")
 	for storageAccount, cmd := range tasks {
@@ -117,14 +117,12 @@ func main() {
 		}(storageAccount, cmd)
 	}
 
-	go func() {
-		wg.Wait()
-		close(errChan)
-	}()
+	wg.Wait()
+	close(errChan)
 
 	if len(errChan) != 0 {
 		for err := range errChan {
-			log.Printf("%w", err)
+			log.Printf("%s", err.Error())
 		}
 		panic("Failed to poll progress of some copy operations")
 	}
