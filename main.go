@@ -25,6 +25,10 @@ func poll(cmd string) (int, int, error) {
 		return 0, 0, errors.New(fmt.Sprintf("ERROR: output: %s, err: %s", out, err.Error()))
 	}
 
+	if strings.Contains(string(out), "ErrorCode:PendingCopyOperation") {
+		return 0, 100, nil
+	}
+
 	parts := strings.Split(string(out), "/")
 	if len(parts) != 2 {
 		return 0, 0, errors.New(fmt.Sprintf("Command should have returned <actual>/<total> instead it was: %s", out))
@@ -89,7 +93,11 @@ func main() {
 					time.Sleep(time.Second * 1)
 				}
 			}
-			log.Printf("Blob size of vhd in Storage Account of %s is: %f GB", storageAccount, float64(sum)/math.Pow(1024, 3))
+			if sum < 1024 {
+				log.Println("Azure didn't return exact numbers, but reported that the blob is being copied... (fingers crossed)")
+			} else {
+				log.Printf("Blob size of vhd in Storage Account of %s is: %f GB", storageAccount, float64(sum)/math.Pow(1024, 3))
+			}
 		}(storageAccount, cmd)
 	}
 	wg.Wait()
@@ -110,7 +118,11 @@ func main() {
 						return
 					}
 				} else {
-					log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(act)/float64(sum))*100)
+					if sum < 1024 {
+						log.Println("Azure didn't return exact numbers, but reported that the blob is still being copied... (fingers crossed)")
+					} else {
+						log.Printf("Copy status to Storage Account of %s is: (%d/%d) %.2f%% ", storageAccount, act, sum, (float64(act)/float64(sum))*100)
+					}
 				}
 				time.Sleep(time.Second * 10)
 			}
