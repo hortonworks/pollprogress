@@ -1,0 +1,11 @@
+# github.com/kless/term v0.0.0-20161130133337-e551c64f56c0
+## explicit
+# github.com/sethgrid/curse v0.0.0-20181231162520-d4ee583ebf0f
+## explicit
+# github.com/tredoe/term v0.0.0-20161130133337-e551c64f56c0
+## explicit
+# golang.org/x/sys v0.18.0
+## explicit
+# gopkg.in/yaml.v2 v2.4.0
+## explicit
+gopkg.in/yaml.v2
