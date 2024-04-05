@@ -2,7 +2,7 @@ export BINARY=pollprogress
 
 # This version refers to the next release version required,
 # which will be increased automatically by the dedicated release job
-export VERSION=1.1
+export VERSION=1.2
 
 BUILD_TIME=$(shell date +%FT%T)
 LDFLAGS=-ldflags "-X github.com/hortonworks/pollprogress/main.Version=${VERSION} -X github.com/hortonworks/pollprogress/main.BuildTime=${BUILD_TIME}"
